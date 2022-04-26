@@ -1,9 +1,5 @@
 package com.longyb.mylive.server;
 
-import java.io.File;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.longyb.mylive.server.cfg.MyLiveConfig;
 import com.longyb.mylive.server.manager.StreamManager;
 
@@ -16,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MyLiveServer {
 	public static void main(String[] args) throws Exception {
 
-		readConfig();
+		ConfigUtils.readConfig();
 		StreamManager streamManager = new StreamManager();
 
 		int rtmpPort = MyLiveConfig.INSTANCE.getRtmpPort();
@@ -35,18 +31,4 @@ public class MyLiveServer {
 
 	}
 
-	private static void readConfig() {
-		ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-		try {
-			File file = new File("./mylive.yaml");
-
-			MyLiveConfig cfg = mapper.readValue(file, MyLiveConfig.class);
-			log.info("MyLive read configuration as : {}", cfg);
-
-			MyLiveConfig.INSTANCE = cfg;
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-
-	}
 }
