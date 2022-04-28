@@ -20,9 +20,19 @@ The package will be installed to `~/.m2/repository/com/longyb/mylive`, which can
 
 Disable log out to STDOUT. These logs are annoying in REPL.
 
-Edit the `logback.xml` (which should be your classpath (target/classes)) and remove `<appender-ref ref="CONSOLE"/>`.
+Edit the `logback.xml` (which should be your classpath) and remove `<appender-ref ref="CONSOLE"/>`.
+and delete any tag with `layout` (See [Layout Instead of Encoder](https://logback.qos.ch/codes.html#layoutInsteadOfEncoder))
 
 See also [Unable to turn off logging in console in logback](https://stackoverflow.com/questions/32947077/unable-to-turn-off-logging-in-console-in-logback)
+
+What to disable it fully? add the line `<statusListener class="ch.qos.logback.core.status.NopStatusListener" />`
+
+[How to prevent logback from outputting its own status at the start of every log when using a layout](https://stackoverflow.com/questions/3257154/how-to-prevent-logback-from-outputting-its-own-status-at-the-start-of-every-log)
+
+```bash
+vim /home/crosstyan/.m2/repository/com/longyb/mylive/0.0.1/mylive-0.0.1.jar
+# find and edit it
+```
 
 ## Introdution
 MyLive is a rtmp server java implementation for live streaming.
