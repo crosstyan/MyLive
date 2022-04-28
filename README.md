@@ -20,8 +20,7 @@ The package will be installed to `~/.m2/repository/com/longyb/mylive`, which can
 
 Disable log out to STDOUT. These logs are annoying in REPL.
 
-Edit the `logback.xml` (which should be your classpath) and remove `<appender-ref ref="CONSOLE"/>`.
-and delete any tag with `layout` (See [Layout Instead of Encoder](https://logback.qos.ch/codes.html#layoutInsteadOfEncoder))
+Edit the `src/resources/logback.xml` and remove `<appender-ref ref="CONSOLE"/>`.
 
 See also [Unable to turn off logging in console in logback](https://stackoverflow.com/questions/32947077/unable-to-turn-off-logging-in-console-in-logback)
 
