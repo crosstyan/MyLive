@@ -21,13 +21,13 @@
     </appender>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <Pattern>
-                %d{HH:mm:ss.SSS} [%t] %-5level %logger{10} - %msg%n
-            </Pattern>
-        </encoder>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <Pattern>
+                    %d{HH:mm:ss.SSS} [%t] %-5level %logger{10} - %msg%n
+                </Pattern>
+            </encoder>
     </appender>
-
+    
 
     <root level="info">
         <appender-ref ref="CONSOLE"/>
