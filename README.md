@@ -22,6 +22,8 @@ Disable log out to STDOUT. These logs are annoying in REPL.
 
 Edit the `logback.xml` (which should be your classpath (target/classes)) and remove `<appender-ref ref="CONSOLE"/>`.
 
+See also [Unable to turn off logging in console in logback](https://stackoverflow.com/questions/32947077/unable-to-turn-off-logging-in-console-in-logback)
+
 ## Introdution
 MyLive is a rtmp server java implementation for live streaming.
 It's not a full feature rtmp server,seek and play2 are not supported. Amf0 is the only supported amf version.
