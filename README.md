@@ -16,6 +16,12 @@ The package will be installed to `~/.m2/repository/com/longyb/mylive`, which can
                [com.longyb/mylive "0.0.1"]]
 ```
 
+### Logs
+
+Disable log out to STDOUT. These logs are annoying in REPL.
+
+Edit the `logback.xml` (which should be your classpath (target/classes)) and remove `<appender-ref ref="CONSOLE"/>`.
+
 ## Introdution
 MyLive is a rtmp server java implementation for live streaming.
 It's not a full feature rtmp server,seek and play2 are not supported. Amf0 is the only supported amf version.
@@ -34,9 +40,10 @@ It's not a full feature rtmp server,seek and play2 are not supported. Amf0 is th
 
 ##   Build & Run
 
+```bash
 mvn package
-
 java -jar mylive.jar
+```
 
 MyLive reads the configuration file "mylive.yaml" placed in the same folder as mylive.jar
 
