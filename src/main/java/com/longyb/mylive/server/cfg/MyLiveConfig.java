@@ -16,6 +16,8 @@ public class MyLiveConfig {
 	String saveFlVFilePath;
 	int handlerThreadPoolSize;
 	boolean enableHttpFlv;
-	
+	boolean sendRtmpCmd;
+	String rtmpCmdPubApi;
+
 	
 }

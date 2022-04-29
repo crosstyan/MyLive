@@ -1,9 +1,15 @@
 package com.longyb.mylive.server.handlers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.net.URI;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.*;
+import java.net.http.HttpClient;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.util.JSONPObject;
 import com.longyb.mylive.amf.Amf0Object;
+import com.longyb.mylive.server.cfg.MyLiveConfig;
 import com.longyb.mylive.server.entities.Role;
 import com.longyb.mylive.server.entities.Stream;
 import com.longyb.mylive.server.entities.StreamName;
@@ -46,8 +52,21 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 
 	private StreamManager streamManager;
 
+	private MyLiveConfig cfg;
+
+	private HttpClient client;
+
+	private HttpRequest.Builder req;
+
 	public RtmpMessageHandler(StreamManager manager) {
 		this.streamManager = manager;
+		this.cfg = MyLiveConfig.INSTANCE;
+		this.client = HttpClient.newHttpClient();
+		if (cfg.isSendRtmpCmd()) {
+			this.req = HttpRequest.newBuilder()
+					.uri(URI.create(cfg.getRtmpCmdPubApi()))
+					.setHeader("Content-Type", "application/json");
+		}
 	}
 
 	@Override
@@ -62,12 +81,39 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 		}
 	}
 
+	void sendToAPI (String cmd, String name){
+		if (this.req != null) {
+			var map = new HashMap<String, String>();
+			map.put("cmd", cmd);
+			map.put("name", name);
+			try {
+				var str = new ObjectMapper().writeValueAsString(map);
+				var body = HttpRequest.BodyPublishers.ofString(str);
+				log.info(str);
+				var r = req.POST(body).build();
+				this.client.sendAsync(r, HttpResponse.BodyHandlers.ofString())
+						.thenAccept((s) -> log.info("res: {}", s));
+			} catch (Exception e) {
+				log.error(e.getMessage());
+			}
+		}
+	}
+
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, RtmpMessage msg) throws Exception {
 
 		maySendAck(ctx, msg);
 		if (!(msg instanceof VideoMessage || msg instanceof AudioMessage)) {
-			log.info("RTMP_Message_Read : {}", msg);
+			if (this.streamName == null || this.streamName.getName() == null){
+				log.info("RTMP_Message_Read: {}", msg);
+			} else if (msg instanceof  RtmpCommandMessage){
+				var cmd = ((RtmpCommandMessage) msg).getCommand().get(0).toString();
+				var name = streamName.getName();
+				log.info("RTMP_Message_Read: {} from {}", cmd, name);
+				sendToAPI(cmd, name);
+			} else {
+				log.info("RTMP_Message_Read: {} from {}", msg, streamName.getName());
+			}
 		}
 		if (msg instanceof WindowAcknowledgementSize) {
 			int ackSize = ((WindowAcknowledgementSize) msg).getWindowSize();
@@ -238,6 +284,10 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 		String name = (String) msg.getCommand().get(3);
 		streamName.setName(name);
 		streamName.setApp(streamType);
+		log.info("Create Stream: stream app name: {}, stream name: {}", streamName.getApp(), streamName.getName());
+		if (name != null) {
+			sendToAPI("publish", name);
+		}
 
 		createStream(ctx);
 		// reply a onStatus
