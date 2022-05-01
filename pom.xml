@@ -26,6 +26,19 @@
                     <target>11</target>
                 </configuration>
             </plugin>
+            <!--https://mkyong.com/maven/maven-exclude-logback-xml-in-jar-file/-->
+            <!-- Make this jar executable -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.2</version>
+                <configuration>
+                    <!-- exclude logback.xml -->
+                    <excludes>
+                        <exclude>**/logback.xml</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
