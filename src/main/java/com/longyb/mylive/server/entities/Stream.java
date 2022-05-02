@@ -7,13 +7,16 @@ package com.longyb.mylive.server.entities;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Paths;
+import java.util.*;
+import java.nio.file.Files;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.longyb.mylive.amf.AMF0;
 import com.longyb.mylive.server.cfg.MyLiveConfig;
 import com.longyb.mylive.server.rtmp.Constants;
@@ -35,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 @Slf4j
 public class Stream {
+
 
 	static byte[] flvHeader = new byte[] { 0x46, 0x4C, 0x56, 0x01, 0x05, 00, 00, 00, 0x09 };
 
@@ -65,9 +69,62 @@ public class Stream {
 		subscribers = new LinkedHashSet<>();
 		httpFLvSubscribers = new LinkedHashSet<>();
 		content = new ArrayList<>();
+		var cfg = MyLiveConfig.INSTANCE;
 		this.streamName = streamName;
-		if (MyLiveConfig.INSTANCE.isSaveFlvFile()) {
-			createFileStream();
+		if (cfg.isSaveFlvFile()) {
+			var baseFilePath = cfg.getSaveFlVFilePath();
+			var basePath = Paths.get(baseFilePath);
+			var defaultFileName = streamName.getApp() + "-" + streamName.getName();
+			// this "if" block will mutate the basePath
+			if (!Files.exists(basePath)){
+				try {
+					log.warn("Directory doesn't exist. Trying to create flv file path: {}", basePath);
+					Files.createDirectories(basePath);
+				} catch (IOException _e) {
+					var defaultPath = Paths.get(System.getProperty("user.dir"), "mylive");
+					log.warn("Create directory failed. Trying to fallback to default path {}", defaultPath);
+					try {
+						if (!Files.exists(defaultPath)) {
+							Files.createDirectories(defaultPath);
+						}
+						basePath = defaultPath;
+					} catch (IOException err) {
+						log.error("Create directory failed. Fallback to default path failed. Stream will not be saved to flv file.", err);
+						cfg.setSaveFlvFile(false);
+					}
+				}
+			}
+			var filePath = Paths.get(basePath.toString(), defaultFileName).toString();
+			// this "if" block will mutate the filePath
+			if (!cfg.getRequestFileNameApi().contains("{chan}")){
+				log.error("`{chan}` is not found in rtmpCmdPubApi. Request filename will be disable and use default name.");
+				cfg.setRequestFileName(false);
+			}
+			if (cfg.isRequestFileName()){
+				HttpClient client = HttpClient.newHttpClient();
+				HttpRequest req;
+				var api = cfg.getRequestFileNameApi().replace("{chan}", streamName.getName());
+				req = HttpRequest.newBuilder()
+						.uri(URI.create(api))
+						.setHeader("Content-Type", "application/json").build();
+				try {
+					var res = client.send(req, HttpResponse.BodyHandlers.ofString());
+					// https://www.baeldung.com/jackson-map
+					log.debug("Filename API {}", res);
+					var mapper = new ObjectMapper();
+					var typeRef = new TypeReference<Map<String, String>>() {};
+					var res_json = mapper.readValue(res.body(), typeRef);
+					if (res_json.containsKey("filename")) {
+						filePath = Paths.get(basePath.toString(), res_json.get("filename")).toString();
+						log.info("Filename for {} is {}", streamName.getName(), res_json.get("filename"));
+					} else {
+						throw new RuntimeException("No filename in response");
+					}
+				} catch (Exception e) {
+					log.error("Request file name failed. Fallback to default filename {} due to error {}.", defaultFileName, e);
+				}
+			}
+			createFileStream(filePath);
 		}
 	}
 
@@ -249,17 +306,12 @@ public class Stream {
 		return buffer;
 	}
 
-	private void createFileStream() {
-		File f = new File(
-				MyLiveConfig.INSTANCE.getSaveFlVFilePath() + "/" + streamName.getApp() + "_" + streamName.getName());
+	private void createFileStream(String filepath) {
+		File f = new File(filepath);
 		try {
-			FileOutputStream fos = new FileOutputStream(f);
-
-			flvout = fos;
-
+			flvout = new FileOutputStream(f);
 		} catch (IOException e) {
 			log.error("create file : {} failed", e);
-
 		}
 
 	}
@@ -351,7 +403,6 @@ public class Stream {
 
 		for (Channel sc : httpFLvSubscribers) {
 			sc.writeAndFlush(DefaultLastHttpContent.EMPTY_LAST_CONTENT).addListener(ChannelFutureListener.CLOSE);
-
 		}
 
 	}

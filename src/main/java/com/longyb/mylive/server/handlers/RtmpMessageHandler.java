@@ -81,11 +81,11 @@ public class RtmpMessageHandler extends SimpleChannelInboundHandler<RtmpMessage>
 		}
 	}
 
-	void sendToAPI (String cmd, String name){
+	void sendToAPI (String cmd, String chan){
 		if (this.req != null) {
 			var map = new HashMap<String, String>();
 			map.put("cmd", cmd);
-			map.put("name", name);
+			map.put("chan", chan);
 			try {
 				var str = new ObjectMapper().writeValueAsString(map);
 				var body = HttpRequest.BodyPublishers.ofString(str);
