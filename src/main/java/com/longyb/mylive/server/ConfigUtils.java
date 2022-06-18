@@ -30,4 +30,15 @@ public class ConfigUtils {
             throw new RuntimeException(e);
         }
     }
+    public static MyLiveConfig readConfigFrom(String pathname, boolean reload){
+        if (reload) {
+            return ConfigUtils.readConfigFrom(pathname);
+        } else {
+            if (MyLiveConfig.INSTANCE == null) {
+                return ConfigUtils.readConfigFrom(pathname);
+            } else {
+                return MyLiveConfig.INSTANCE;
+            }
+        }
+    }
 }
